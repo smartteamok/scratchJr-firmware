@@ -1,1 +1,56 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScratchJr Firmware micro:bit</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <p class="eyebrow">ScratchJr BLE Platform</p>
+        <h1>Descargar firmware micro:bit</h1>
+        <p class="intro">
+          Personalizá el nombre Bluetooth del robot y descargá un archivo
+          <code>.hex</code> listo para copiar a la micro:bit.
+        </p>
 
+        <form id="firmware-form" class="form">
+          <label for="bluetooth-name">Nombre Bluetooth</label>
+          <input
+            id="bluetooth-name"
+            name="bluetoothName"
+            type="text"
+            value="ScratchJr"
+            maxlength="20"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+          <div class="hint">
+            Usá hasta 20 caracteres ASCII. Se parchea localmente en tu navegador;
+            no se sube ningún dato.
+          </div>
+
+          <button id="download-button" type="submit">Descargar .hex</button>
+        </form>
+
+        <div id="status" class="status" role="status" aria-live="polite">
+          Listo para generar el firmware.
+        </div>
+      </section>
+
+      <section class="notes">
+        <h2>Cómo usarlo</h2>
+        <ol>
+          <li>Escribí el nombre Bluetooth que querés ver al escanear.</li>
+          <li>Descargá el archivo <code>.hex</code>.</li>
+          <li>Conectá la micro:bit por USB y copiá el archivo descargado.</li>
+        </ol>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
