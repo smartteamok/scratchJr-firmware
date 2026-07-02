@@ -18,7 +18,7 @@ function setStatus(message, type = "") {
 function parseHexByte(text, offset) {
   const value = Number.parseInt(text.slice(offset, offset + 2), 16);
   if (!Number.isFinite(value) || value < 0 || value > 255) {
-    throw new Error(`HEX invalido cerca de la posicion ${offset}.`);
+    throw new Error(`Invalid HEX near position ${offset}.`);
   }
   return value;
 }
@@ -30,7 +30,7 @@ function checksum(bytes) {
 
 function parseIntelHexLine(line, index) {
   if (!line.startsWith(":")) {
-    throw new Error(`Linea ${index + 1}: falta ':' inicial.`);
+    throw new Error(`Line ${index + 1}: missing leading ':'.`);
   }
 
   const byteCount = parseHexByte(line, 1);
@@ -38,7 +38,7 @@ function parseIntelHexLine(line, index) {
   const type = parseHexByte(line, 7);
   const expectedLength = 11 + byteCount * 2;
   if (line.length !== expectedLength) {
-    throw new Error(`Linea ${index + 1}: longitud Intel HEX inesperada.`);
+    throw new Error(`Line ${index + 1}: unexpected Intel HEX length.`);
   }
 
   const data = [];
@@ -55,7 +55,7 @@ function parseIntelHexLine(line, index) {
   ];
   const expectedChecksum = checksum(bytesForChecksum);
   if (actualChecksum !== expectedChecksum) {
-    throw new Error(`Linea ${index + 1}: checksum invalido.`);
+    throw new Error(`Line ${index + 1}: invalid checksum.`);
   }
 
   return { byteCount, address, type, data, raw: line };
@@ -103,7 +103,7 @@ function asciiBytes(text) {
   return Array.from(text, (char) => {
     const code = char.charCodeAt(0);
     if (code < 0x20 || code > 0x7e) {
-      throw new Error("El nombre debe usar solo caracteres ASCII imprimibles.");
+      throw new Error("The name must use only printable ASCII characters.");
     }
     return code;
   });
@@ -112,15 +112,15 @@ function asciiBytes(text) {
 function fixedNameBytes(name) {
   const trimmedName = name.trim();
   if (!trimmedName) {
-    throw new Error("Ingresá un nombre Bluetooth.");
+    throw new Error("Enter a Bluetooth name.");
   }
   if (!trimmedName.startsWith(REQUIRED_PREFIX)) {
-    throw new Error(`El nombre debe comenzar con "${REQUIRED_PREFIX}".`);
+    throw new Error(`The name must start with "${REQUIRED_PREFIX}".`);
   }
 
   const bytes = asciiBytes(trimmedName);
   if (bytes.length > NAME_SLOT_BYTES) {
-    throw new Error(`El nombre no puede superar ${NAME_SLOT_BYTES} caracteres.`);
+    throw new Error(`The name cannot exceed ${NAME_SLOT_BYTES} characters.`);
   }
   while (bytes.length < NAME_SLOT_BYTES) {
     bytes.push(0x20);
@@ -173,7 +173,7 @@ function patchRecords(records, startAddress, replacementBytes) {
   }
 
   if (patchedCount !== replacementBytes.length) {
-    throw new Error("No se pudieron parchear todos los bytes del nombre.");
+    throw new Error("Could not patch all name bytes.");
   }
 }
 
@@ -182,7 +182,7 @@ function patchBluetoothName(hexText, bluetoothName) {
   const marker = asciiBytes(DEFAULT_NAME_SLOT);
   const matches = findByteSequence(parsed.memory, marker);
   if (matches.length !== 1) {
-    throw new Error(`Se esperaba encontrar 1 slot de nombre, encontrados: ${matches.length}.`);
+    throw new Error(`Expected to find 1 name slot, found: ${matches.length}.`);
   }
 
   patchRecords(parsed.records, matches[0], fixedNameBytes(bluetoothName));
@@ -208,12 +208,12 @@ function safeFilenamePart(text) {
 async function generateFirmware(event) {
   event.preventDefault();
   downloadButton.disabled = true;
-  setStatus("Preparando firmware...");
+  setStatus("Preparing firmware...");
 
   try {
     const response = await fetch(BASE_HEX_URL, { cache: "no-store" });
     if (!response.ok) {
-      throw new Error(`No se pudo cargar el firmware base (${response.status}).`);
+      throw new Error(`Could not load the base firmware (${response.status}).`);
     }
 
     const baseHex = await response.text();
@@ -221,9 +221,9 @@ async function generateFirmware(event) {
     const patchedHex = patchBluetoothName(baseHex, bluetoothName);
     const filename = `scratchjr-microbit-${safeFilenamePart(bluetoothName)}.hex`;
     downloadTextFile(filename, patchedHex);
-    setStatus(`Firmware generado: ${filename}`, "success");
+    setStatus(`Firmware generated: ${filename}`, "success");
   } catch (error) {
-    setStatus(error.message || "No se pudo generar el firmware.", "error");
+    setStatus(error.message || "Could not generate the firmware.", "error");
   } finally {
     downloadButton.disabled = false;
   }
