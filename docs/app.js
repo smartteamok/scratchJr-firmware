@@ -3,6 +3,7 @@
 const BASE_HEX_URL = "./firmware/scratchjr-microbit-base.hex";
 const DEFAULT_NAME_SLOT = "sjr-                ";
 const NAME_SLOT_BYTES = 20;
+const REQUIRED_PREFIX = "sjr-";
 
 const form = document.getElementById("firmware-form");
 const nameInput = document.getElementById("bluetooth-name");
@@ -113,6 +114,9 @@ function fixedNameBytes(name) {
   if (!trimmedName) {
     throw new Error("Ingresá un nombre Bluetooth.");
   }
+  if (!trimmedName.startsWith(REQUIRED_PREFIX)) {
+    throw new Error(`El nombre debe comenzar con "${REQUIRED_PREFIX}".`);
+  }
 
   const bytes = asciiBytes(trimmedName);
   if (bytes.length > NAME_SLOT_BYTES) {
@@ -213,7 +217,7 @@ async function generateFirmware(event) {
     }
 
     const baseHex = await response.text();
-    const bluetoothName = nameInput.value;
+    const bluetoothName = REQUIRED_PREFIX + nameInput.value.trim();
     const patchedHex = patchBluetoothName(baseHex, bluetoothName);
     const filename = `scratchjr-microbit-${safeFilenamePart(bluetoothName)}.hex`;
     downloadTextFile(filename, patchedHex);

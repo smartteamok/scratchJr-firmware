@@ -19,18 +19,23 @@
 
         <form id="firmware-form" class="form">
           <label for="bluetooth-name">Bluetooth name</label>
-          <input
-            id="bluetooth-name"
-            name="bluetoothName"
-            type="text"
-            value="sjr-"
-            maxlength="20"
-            autocomplete="off"
-            spellcheck="false"
-            required
-          />
-          <div class="hint">
-            Use up to 20 ASCII characters. Patching runs locally in your browser;
+          <div class="name-field">
+            <span class="name-prefix" aria-hidden="true">sjr-</span>
+            <input
+              id="bluetooth-name"
+              name="bluetoothName"
+              type="text"
+              maxlength="16"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="robot"
+              aria-describedby="name-hint"
+              required
+            />
+          </div>
+          <div id="name-hint" class="hint">
+            The <code>sjr-</code> prefix is required and cannot be removed. Add up
+            to 16 more ASCII characters. Patching runs locally in your browser;
             no data is uploaded.
           </div>
 
