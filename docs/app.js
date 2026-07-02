@@ -217,9 +217,10 @@ async function generateFirmware(event) {
     }
 
     const baseHex = await response.text();
+    /* The BLE name keeps the hidden "sjr-" prefix so the app can filter devices. */
     const bluetoothName = REQUIRED_PREFIX + nameInput.value.trim();
     const patchedHex = patchBluetoothName(baseHex, bluetoothName);
-    const filename = `scratchjr-microbit-${safeFilenamePart(bluetoothName)}.hex`;
+    const filename = `scratchjr-microbit-${safeFilenamePart(nameInput.value)}.hex`;
     downloadTextFile(filename, patchedHex);
     setStatus(`Firmware generated: ${filename}`, "success");
   } catch (error) {
