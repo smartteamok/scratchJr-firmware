@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ScratchJr micro:bit Firmware</title>
+    <title>ScratchJr Firmware</title>
     <link rel="stylesheet" href="./style.css" />
     <link rel="icon" type="image/png" href="./favicon.png">
   </head>
@@ -11,13 +11,31 @@
     <main class="page">
       <section class="card">
         <p class="eyebrow">ScratchJr BLE Platform</p>
-        <h1>Download micro:bit firmware</h1>
+        <h1>Download firmware</h1>
         <p class="intro">
-          Set your robot’s Bluetooth name and download a
-          <code>.hex</code> file ready to copy to the micro:bit.
+          Pick your board, set its Bluetooth name and download a
+          <code>.hex</code> file ready to copy to the device.
         </p>
 
         <form id="firmware-form" class="form">
+          <fieldset class="variant" aria-describedby="variant-hint">
+            <legend>Board</legend>
+            <label class="variant-option">
+              <input type="radio" name="variant" value="microbit" checked />
+              <span>
+                <strong>Classic micro:bit</strong>
+                <small>Built-in sensors and LED matrix.</small>
+              </span>
+            </label>
+            <label class="variant-option">
+              <input type="radio" name="variant" value="mbkit" />
+              <span>
+                <strong>mb-kit (IIC modules)</strong>
+                <small>External IIC modules with configurable sensors.</small>
+              </span>
+            </label>
+          </fieldset>
+
           <label for="bluetooth-name">Bluetooth name</label>
           <input
             id="bluetooth-name"
@@ -35,6 +53,60 @@
             no data is uploaded.
           </div>
 
+          <div id="mbkit-panel" class="mbkit-panel" hidden>
+            <h2 class="panel-title">mb-kit sensor settings</h2>
+            <p class="hint">
+              These values are written into the firmware. Leave the defaults if
+              you are unsure.
+            </p>
+
+            <div class="params-grid">
+              <label class="param">
+                <span>Near threshold (mm)</span>
+                <input type="number" id="near_threshold_mm" min="0" max="65535" step="1" value="200" />
+              </label>
+
+              <label class="param">
+                <span>Light threshold (0–65535)</span>
+                <input type="number" id="light_threshold" min="0" max="65535" step="1" value="500" />
+              </label>
+
+              <label class="param">
+                <span>Wet threshold (0–255)</span>
+                <input type="number" id="wet_threshold" min="0" max="255" step="1" value="128" />
+              </label>
+
+              <label class="param">
+                <span>Ring brightness (0–255)</span>
+                <input type="number" id="ring_brightness" min="0" max="255" step="1" value="128" />
+              </label>
+
+              <label class="param">
+                <span>Rainbow step (ms)</span>
+                <input type="number" id="rainbow_step_ms" min="1" max="65535" step="1" value="80" />
+              </label>
+            </div>
+
+            <div class="toggles">
+              <label class="toggle">
+                <input type="checkbox" id="soil_high_is_wet" checked />
+                <span>Higher soil reading = wetter</span>
+              </label>
+              <label class="toggle">
+                <input type="checkbox" id="motor_swap" />
+                <span>Swap motors (left/right)</span>
+              </label>
+              <label class="toggle">
+                <input type="checkbox" id="motor0_invert" />
+                <span>Invert motor 0</span>
+              </label>
+              <label class="toggle">
+                <input type="checkbox" id="motor1_invert" />
+                <span>Invert motor 1</span>
+              </label>
+            </div>
+          </div>
+
           <button id="download-button" type="submit">Download .hex</button>
         </form>
 
@@ -46,9 +118,9 @@
       <section class="notes">
         <h2>How to use</h2>
         <ol>
-          <li>Enter the Bluetooth name you want to see when scanning.</li>
+          <li>Choose your board and enter the Bluetooth name you want to see when scanning.</li>
           <li>Download the <code>.hex</code> file.</li>
-          <li>Connect the micro:bit via USB and copy the downloaded file onto it.</li>
+          <li>Connect the board via USB and copy the downloaded file onto it.</li>
         </ol>
       </section>
     </main>
