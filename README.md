@@ -19,7 +19,7 @@ El prefijo `sjr-` es obligatorio: la app ScratchJr lo usa para filtrar dispositi
 
 ## Configuración de sensores (solo mb-kit)
 
-Al elegir mb-kit se habilita un panel con los tunables del kit (umbrales de cerca/luz/húmedo, polaridad de humedad, brillo del anillo, paso del arcoíris, swap e inversión de motores). Esos valores se escriben en un bloque de configuración embebido en el binario (magic `SJRMBK01` + CRC-32). El layout es la fuente de verdad compartida con el firmware: ver `MBKIT-GUIDE.md §6.1` en el repo `ScratchJr-Backend`.
+Al elegir mb-kit se habilita un panel con los tunables del kit (umbrales de cerca/luz/húmedo, polaridad de humedad, potencia PWM de motores, unidad de tiempo de motion/wait, brillo del anillo, paso de animación, swap e inversión de motores). Esos valores se escriben en un bloque de configuración embebido en el binario (magic `SJRMBK01` + CRC-32). El layout es la fuente de verdad compartida con el firmware: ver `MBKIT-GUIDE.md §6.1` en el repo `ScratchJr-Backend`.
 
 ## Actualizar firmware base
 

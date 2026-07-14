@@ -248,11 +248,13 @@ function readMbkitConfig() {
     light_threshold: readNumberField("light_threshold", "Light threshold", 0, 65535),
     wet_threshold: readNumberField("wet_threshold", "Wet threshold", 0, 255),
     ring_brightness: readNumberField("ring_brightness", "Ring brightness", 0, 255),
-    rainbow_step_ms: readNumberField("rainbow_step_ms", "Rainbow step", 1, 65535),
+    rainbow_step_ms: readNumberField("rainbow_step_ms", "Animation step", 1, 65535),
     soil_high_is_wet: document.getElementById("soil_high_is_wet").checked ? 1 : 0,
     motor_swap: document.getElementById("motor_swap").checked ? 1 : 0,
     motor0_invert: document.getElementById("motor0_invert").checked ? 1 : 0,
     motor1_invert: document.getElementById("motor1_invert").checked ? 1 : 0,
+    motor_default_speed: readNumberField("motor_default_speed", "Motor speed", 1, 255),
+    wait_unit_ms: readNumberField("wait_unit_ms", "Time unit", 1, 65535),
   };
 }
 
@@ -272,7 +274,9 @@ function buildMbkitConfigBlock(cfg) {
   bytes[19] = cfg.motor_swap;
   bytes[20] = cfg.motor0_invert;
   bytes[21] = cfg.motor1_invert;
-  /* bytes[22..27] reserved, already zero */
+  bytes[22] = cfg.motor_default_speed & 0xff;
+  writeU16le(bytes, 23, cfg.wait_unit_ms);
+  /* bytes[25..27] reserved, already zero */
   writeU32le(bytes, 28, crc32Ieee(bytes.slice(0, 28)));
   return bytes;
 }

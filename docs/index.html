@@ -77,13 +77,23 @@
               </label>
 
               <label class="param">
+                <span>Motor speed (PWM 0–255)</span>
+                <input type="number" id="motor_default_speed" min="1" max="255" step="1" value="100" />
+              </label>
+
+              <label class="param">
+                <span>Time unit (ms)</span>
+                <input type="number" id="wait_unit_ms" min="1" max="65535" step="1" value="500" />
+              </label>
+
+              <label class="param">
                 <span>Ring brightness (0–255)</span>
                 <input type="number" id="ring_brightness" min="0" max="255" step="1" value="128" />
               </label>
 
               <label class="param">
-                <span>Rainbow step (ms)</span>
-                <input type="number" id="rainbow_step_ms" min="1" max="65535" step="1" value="80" />
+                <span>Animation step (ms)</span>
+                <input type="number" id="rainbow_step_ms" min="1" max="65535" step="1" value="400" />
               </label>
             </div>
 
