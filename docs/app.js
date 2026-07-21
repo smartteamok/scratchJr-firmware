@@ -27,10 +27,137 @@ const downloadButton = document.getElementById("download-button");
 const mbkitPanel = document.getElementById("mbkit-panel");
 const variantRadios = Array.from(document.querySelectorAll('input[name="variant"]'));
 
+/* ── i18n (EN / ES) ───────────────────────────────────────── */
+
+const STRINGS = {
+  en: {
+    brandSub: "Download &amp; configure",
+    themeDark: "Dark", themeLight: "Light",
+    title: "Download firmware",
+    intro: "Pick your board, set its Bluetooth name and tune the kit. Everything is patched locally in your browser — nothing is uploaded.",
+    board: "Board",
+    microbitDesc: "Built-in sensors and LED matrix.",
+    mbkitDesc: "External IIC modules, configurable sensors.",
+    btName: "Bluetooth name",
+    btHint: 'Up to 16 ASCII characters. The <code>sjr-</code> prefix stays embedded in the advertised name but is hidden on the device.',
+    presets: "Quick presets",
+    presetClassroom: "Classroom", presetHome: "Home", presetReset: "↺ Reset to defaults",
+    grpSensors: "Sensors", grpSensorsSub: "wait thresholds · I2C 0x10–0x23",
+    pNear: "“Near” distance", pWet: "Moisture threshold",
+    pSoil: "Higher reading = wetter", pSoilSub: "Flip this if the sensor reads inverted.",
+    pLight: "Light threshold",
+    grpMotors: "Motors", grpMotorsSub: "movement &amp; speed · I2C 0x25",
+    pMotor: "Motor speed",
+    pWaitUnit: 'Time unit <span class="sub">· movement/display</span>',
+    advCal: "Advanced motor calibration",
+    pSwap: "Swap motors (left/right)", pSwapSub: "If turns come out mirrored.",
+    pInv0: "Invert motor 0", pInv1: "Invert motor 1",
+    grpRings: "LED rings", grpRingsSub: "brightness &amp; rainbow · I2C 0x24/0x26",
+    pBright: "Ring brightness", pRainbow: "Rainbow speed",
+    blockTitle: "Configuration block written to the device",
+    download: "Download .hex",
+    statusReady: "Ready to generate firmware.",
+    howTitle: "How to use",
+    how1: "Choose your board and enter the Bluetooth name you want to see when scanning.",
+    how2: "Tune the mb-kit settings if you are using that board (optional).",
+    how3: "Download the <code>.hex</code> file, connect the board via USB and copy the file onto it.",
+    /* dynamic */
+    preparing: "Preparing firmware…",
+    generated: (f) => `Firmware generated: ${f}`,
+    presetApplied: (n) => `Preset “${n}” applied.`,
+    defaultsRestored: "Defaults restored.",
+    downloadFail: "Could not generate the firmware.",
+  },
+  es: {
+    brandSub: "Descargar y configurar",
+    themeDark: "Oscuro", themeLight: "Claro",
+    title: "Descargá el firmware",
+    intro: "Elegí la placa, ponele nombre Bluetooth y ajustá el kit. Todo se parchea localmente en tu navegador — no se sube nada.",
+    board: "Placa",
+    microbitDesc: "Sensores y matriz LED integrados.",
+    mbkitDesc: "Módulos IIC externos, sensores configurables.",
+    btName: "Nombre Bluetooth",
+    btHint: 'Hasta 16 caracteres ASCII. El prefijo <code>sjr-</code> queda embebido en el nombre anunciado pero no se muestra en la placa.',
+    presets: "Ajustes rápidos",
+    presetClassroom: "Aula", presetHome: "Casa", presetReset: "↺ Restaurar valores",
+    grpSensors: "Sensores", grpSensorsSub: "umbrales de espera · I2C 0x10–0x23",
+    pNear: "Distancia «cerca»", pWet: "Umbral de humedad",
+    pSoil: "Lectura alta = más húmedo", pSoilSub: "Invertí esto si el sensor mide al revés.",
+    pLight: "Umbral de luz",
+    grpMotors: "Motores", grpMotorsSub: "movimiento y velocidad · I2C 0x25",
+    pMotor: "Velocidad del motor",
+    pWaitUnit: 'Unidad de tiempo <span class="sub">· movimiento/display</span>',
+    advCal: "Calibración avanzada de motor",
+    pSwap: "Intercambiar motores (izq./der.)", pSwapSub: "Si los giros salen espejados.",
+    pInv0: "Invertir motor 0", pInv1: "Invertir motor 1",
+    grpRings: "Anillos LED", grpRingsSub: "brillo y arcoíris · I2C 0x24/0x26",
+    pBright: "Brillo del anillo", pRainbow: "Velocidad del arcoíris",
+    blockTitle: "Bloque de configuración que se escribe",
+    download: "Descargar .hex",
+    statusReady: "Listo para generar el firmware.",
+    howTitle: "Cómo usar",
+    how1: "Elegí la placa y el nombre Bluetooth que querés ver al escanear.",
+    how2: "Ajustá los parámetros del mb-kit si usás esa placa (opcional).",
+    how3: "Descargá el <code>.hex</code>, conectá la placa por USB y copiá el archivo en ella.",
+    /* dynamic */
+    preparing: "Preparando firmware…",
+    generated: (f) => `Firmware generado: ${f}`,
+    presetApplied: (n) => `Preset «${n}» aplicado.`,
+    defaultsRestored: "Valores por defecto restaurados.",
+    downloadFail: "No se pudo generar el firmware.",
+  },
+};
+
+let lang = (() => {
+  try { const s = localStorage.getItem("sjr-lang"); if (s === "en" || s === "es") return s; } catch (e) {}
+  return (navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
+})();
+const t = (key) => STRINGS[lang][key];
+
+function applyLang(next) {
+  lang = next;
+  try { localStorage.setItem("sjr-lang", lang); } catch (e) {}
+  document.documentElement.setAttribute("lang", lang);
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const val = STRINGS[lang][el.dataset.i18n];
+    if (typeof val === "string") el.innerHTML = val;
+  });
+  document.getElementById("lang-text").textContent = lang === "en" ? "ES" : "EN";
+  updateThemeLabel();
+  renderAllDerived();
+}
+
+/* ── theme ────────────────────────────────────────────────── */
+
+const root = document.documentElement;
+function isDark() {
+  const a = root.getAttribute("data-theme");
+  if (a === "dark") return true;
+  if (a === "light") return false;
+  return matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function updateThemeLabel() {
+  document.getElementById("theme-icon").textContent = isDark() ? "☀" : "☾";
+  document.getElementById("theme-text").textContent = isDark() ? t("themeLight") : t("themeDark");
+}
+document.getElementById("theme-button").addEventListener("click", () => {
+  const next = isDark() ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("sjr-theme", next); } catch (e) {}
+  updateThemeLabel();
+});
+document.getElementById("lang-button").addEventListener("click", () => applyLang(lang === "en" ? "es" : "en"));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateThemeLabel);
+
+/* ── status ───────────────────────────────────────────────── */
+
 function setStatus(message, type = "") {
+  statusEl.removeAttribute("data-i18n"); /* stop applyLang from overwriting a live message */
   statusEl.textContent = message;
   statusEl.className = type ? `status ${type}` : "status";
 }
+
+/* ── Intel HEX parsing / patching (unchanged core logic) ──── */
 
 function parseHexByte(text, offset) {
   const value = Number.parseInt(text.slice(offset, offset + 2), 16);
@@ -207,7 +334,7 @@ function patchBluetoothName(records, memory, bluetoothName) {
   patchRecords(records, matches[0], fixedNameBytes(bluetoothName));
 }
 
-/* ── mb-kit config block ──────────────────────────────────────────── */
+/* ── mb-kit config block ──────────────────────────────────── */
 
 function crc32Ieee(bytes) {
   let crc = 0xffffffff;
@@ -242,18 +369,26 @@ function readNumberField(id, label, min, max) {
   return value;
 }
 
+/* Motor speed is entered as 0–100 % and mapped onto the PWM byte (0–255).
+ * Clamped to a minimum of 1 so the field never writes 0, which the firmware
+ * would read as "use the compile-time default". */
+function motorPwmFromPercent() {
+  const pct = readNumberField("motor_speed_pct", "Motor speed", 0, 100);
+  return Math.max(1, Math.round((pct / 100) * 255));
+}
+
 function readMbkitConfig() {
   return {
     near_threshold_mm: readNumberField("near_threshold_mm", "Near threshold", 0, 65535),
     light_threshold: readNumberField("light_threshold", "Light threshold", 0, 65535),
     wet_threshold: readNumberField("wet_threshold", "Wet threshold", 0, 255),
     ring_brightness: readNumberField("ring_brightness", "Ring brightness", 0, 255),
-    rainbow_step_ms: readNumberField("rainbow_step_ms", "Animation step", 1, 65535),
+    rainbow_step_ms: readNumberField("rainbow_step_ms", "Rainbow speed", 1, 65535),
     soil_high_is_wet: document.getElementById("soil_high_is_wet").checked ? 1 : 0,
     motor_swap: document.getElementById("motor_swap").checked ? 1 : 0,
     motor0_invert: document.getElementById("motor0_invert").checked ? 1 : 0,
     motor1_invert: document.getElementById("motor1_invert").checked ? 1 : 0,
-    motor_default_speed: readNumberField("motor_default_speed", "Motor speed", 1, 255),
+    motor_default_speed: motorPwmFromPercent(),
     wait_unit_ms: readNumberField("wait_unit_ms", "Time unit", 1, 65535),
   };
 }
@@ -325,7 +460,123 @@ function verifyPatchedHex(hexText, variant, bluetoothName) {
   }
 }
 
-/* ── Download flow ────────────────────────────────────────────────── */
+/* ── UI: sliders, derived values, presets, live block ─────── */
+
+const SLIDER_IDS = ["near_threshold_mm", "wet_threshold", "motor_speed_pct", "wait_unit_ms", "ring_brightness", "rainbow_step_ms"];
+const NUMERIC_IDS = SLIDER_IDS.concat("light_threshold");
+const numVal = (id) => Number.parseInt(document.getElementById(id).value, 10) || 0;
+
+/* palette matching the firmware RING_PALETTE_RGB (rainbow = first 7) */
+const RAINBOW = [[255,0,0],[255,128,0],[255,255,0],[0,255,0],[0,255,255],[0,0,255],[128,0,255]];
+
+function derivedHTML(id) {
+  const v = numVal(id);
+  const es = lang === "es";
+  switch (id) {
+    case "near_threshold_mm": {
+      const cm = (v / 10).toFixed(v < 100 ? 1 : 0);
+      return es
+        ? `<span class="em">≈ ${cm} cm</span> <span class="note">— dispara cuando algo está más cerca</span>`
+        : `<span class="em">≈ ${cm} cm</span> <span class="note">— triggers when something is closer</span>`;
+    }
+    case "wet_threshold":
+      return es
+        ? `<span class="note">dispara con humedad</span> <span class="em">≥ ${v}</span>`
+        : `<span class="note">triggers at moisture</span> <span class="em">≥ ${v}</span>`;
+    case "light_threshold":
+      return es
+        ? `<span class="note">cuenta cruda 0–65535 · sin referencia de vendor,</span> <span class="em">calibrá con el sensor real</span>`
+        : `<span class="note">raw count 0–65535 · no vendor reference,</span> <span class="em">calibrate with the real sensor</span>`;
+    case "motor_speed_pct": {
+      const pwm = Math.max(1, Math.round((v / 100) * 255));
+      return es
+        ? `<span class="note">PWM que se escribe:</span> <span class="em">${pwm} / 255</span>`
+        : `<span class="note">PWM written:</span> <span class="em">${pwm} / 255</span>`;
+    }
+    case "wait_unit_ms":
+      return es
+        ? `<span class="note">Forward 1 =</span> <span class="em">${v} ms</span> <span class="note">· el bloque Esperar usa 1 s fijo (no depende de esto)</span>`
+        : `<span class="note">Forward 1 =</span> <span class="em">${v} ms</span> <span class="note">· the Wait block uses a fixed 1 s (independent of this)</span>`;
+    case "ring_brightness": {
+      const pct = Math.round((v / 255) * 100);
+      const dots = RAINBOW.map(([r, g, b]) =>
+        `<i style="background:rgb(${Math.round(r*v/255)},${Math.round(g*v/255)},${Math.round(b*v/255)})"></i>`).join("");
+      return `<span class="ringdots" aria-hidden="true">${dots}</span> <span class="em">${pct}%</span>`;
+    }
+    case "rainbow_step_ms":
+      return es
+        ? `<span class="note">vuelta completa</span> <span class="em">≈ ${(7*v/1000).toFixed(1)} s</span> <span class="note">(7 posiciones)</span>`
+        : `<span class="note">full lap</span> <span class="em">≈ ${(7*v/1000).toFixed(1)} s</span> <span class="note">(7 positions)</span>`;
+    default:
+      return "";
+  }
+}
+
+function renderDerived(id) {
+  const el = document.querySelector(`[data-derive-for="${id}"]`);
+  if (el) el.innerHTML = derivedHTML(id);
+}
+function renderAllDerived() { NUMERIC_IDS.forEach(renderDerived); }
+
+SLIDER_IDS.forEach((id) => {
+  const num = document.getElementById(id);
+  const sld = document.querySelector(`[data-for="${id}"]`);
+  sld.addEventListener("input", () => { num.value = sld.value; renderDerived(id); renderBlock(); });
+  num.addEventListener("input", () => { renderDerived(id); renderBlock(); });
+  num.addEventListener("change", () => {
+    let v = Number.parseInt(num.value, 10);
+    if (!Number.isFinite(v)) v = Number.parseInt(sld.value, 10);
+    v = Math.min(+num.max, Math.max(+num.min, v));
+    num.value = v;
+    sld.value = Math.min(+sld.max, Math.max(+sld.min, v));
+    renderDerived(id); renderBlock();
+  });
+});
+document.getElementById("light_threshold").addEventListener("input", () => { renderDerived("light_threshold"); renderBlock(); });
+document.querySelectorAll(".switch input").forEach((tgl) => tgl.addEventListener("change", renderBlock));
+
+/* Presets — illustrative bundles */
+const PRESETS = {
+  default:   { near_threshold_mm:200, wet_threshold:128, soil_high_is_wet:1, light_threshold:500, motor_speed_pct:40, wait_unit_ms:500, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:128, rainbow_step_ms:400 },
+  classroom: { near_threshold_mm:250, wet_threshold:120, soil_high_is_wet:1, light_threshold:800, motor_speed_pct:55, wait_unit_ms:450, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:205, rainbow_step_ms:300 },
+  home:      { near_threshold_mm:180, wet_threshold:135, soil_high_is_wet:1, light_threshold:350, motor_speed_pct:45, wait_unit_ms:600, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:95,  rainbow_step_ms:550 },
+};
+function applyPreset(name) {
+  const p = PRESETS[name];
+  if (!p) return;
+  for (const [id, val] of Object.entries(p)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    if (el.type === "checkbox") el.checked = !!val;
+    else {
+      el.value = val;
+      const s = document.querySelector(`[data-for="${id}"]`);
+      if (s) s.value = val;
+    }
+  }
+  renderAllDerived();
+  renderBlock();
+  const label = name === "default" ? t("defaultsRestored") : t("presetApplied")(t("preset" + name.charAt(0).toUpperCase() + name.slice(1)));
+  setStatus(label);
+}
+document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => applyPreset(c.dataset.preset)));
+
+/* Live 32-byte block preview (reuses buildMbkitConfigBlock) */
+const hexToStr = (v) => v.toString(16).padStart(2, "0").toUpperCase();
+function renderBlock() {
+  const el = document.getElementById("block-hex");
+  if (!el) return;
+  let block;
+  try { block = buildMbkitConfigBlock(readMbkitConfig()); }
+  catch (e) { el.innerHTML = '<span class="meta">—</span>'; return; }
+  el.innerHTML = block.map((v, i) => {
+    let cls = "b";
+    if (i < 8) cls += " magic"; else if (i >= 28) cls += " crc"; else if (i === 8 || i === 9) cls += " meta";
+    return `<span class="${cls}">${hexToStr(v)}</span>`;
+  }).join(" ");
+}
+
+/* ── Download flow ────────────────────────────────────────── */
 
 function downloadTextFile(filename, text) {
   const blob = new Blob([text], { type: "application/octet-stream" });
@@ -350,12 +601,13 @@ function getVariant() {
 
 function updateVariantUI() {
   mbkitPanel.hidden = getVariant() !== "mbkit";
+  if (!mbkitPanel.hidden) renderBlock();
 }
 
 async function generateFirmware(event) {
   event.preventDefault();
   downloadButton.disabled = true;
-  setStatus("Preparing firmware...");
+  setStatus(t("preparing"));
 
   try {
     const variant = getVariant();
@@ -384,9 +636,9 @@ async function generateFirmware(event) {
 
     const filename = `${spec.filePrefix}-${safeFilenamePart(nameInput.value)}.hex`;
     downloadTextFile(filename, patchedHex);
-    setStatus(`Firmware generated: ${filename}`, "success");
+    setStatus(t("generated")(filename), "success");
   } catch (error) {
-    setStatus(error.message || "Could not generate the firmware.", "error");
+    setStatus(error.message || t("downloadFail"), "error");
   } finally {
     downloadButton.disabled = false;
   }
@@ -394,4 +646,10 @@ async function generateFirmware(event) {
 
 variantRadios.forEach((radio) => radio.addEventListener("change", updateVariantUI));
 form.addEventListener("submit", generateFirmware);
+
+/* init */
+applyLang(lang);
+updateThemeLabel();
 updateVariantUI();
+renderAllDerived();
+renderBlock();

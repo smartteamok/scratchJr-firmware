@@ -5,132 +5,216 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ScratchJr Firmware</title>
     <link rel="stylesheet" href="./style.css" />
-    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <script>
+      try {
+        var t = localStorage.getItem("sjr-theme");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+        var l = localStorage.getItem("sjr-lang");
+        if (l) document.documentElement.setAttribute("lang", l);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <main class="page">
+      <div class="topbar">
+        <div class="brand">
+          <span class="dot" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="4" y1="8" x2="20" y2="8" /><circle cx="9" cy="8" r="2.4" fill="currentColor" stroke="none" />
+              <line x1="4" y1="16" x2="20" y2="16" /><circle cx="15" cy="16" r="2.4" fill="currentColor" stroke="none" />
+            </svg>
+          </span>
+          <b>ScratchJr Firmware<span data-i18n="brandSub">Download &amp; configure</span></b>
+        </div>
+        <div class="switches">
+          <button class="pill-toggle" id="lang-button" type="button" aria-label="Change language"><span id="lang-text">ES</span></button>
+          <button class="pill-toggle" id="theme-button" type="button" aria-label="Toggle colour theme">
+            <span id="theme-icon">☾</span><span id="theme-text" data-i18n="themeDark">Dark</span>
+          </button>
+        </div>
+      </div>
+
       <section class="card">
         <p class="eyebrow">ScratchJr BLE Platform</p>
-        <h1>Download firmware</h1>
-        <p class="intro">
-          Pick your board, set its Bluetooth name and download a
-          <code>.hex</code> file ready to copy to the device.
+        <h1 data-i18n="title">Download firmware</h1>
+        <p class="intro" data-i18n="intro">
+          Pick your board, set its Bluetooth name and tune the kit. Everything is
+          patched locally in your browser — nothing is uploaded.
         </p>
 
         <form id="firmware-form" class="form">
-          <fieldset class="variant" aria-describedby="variant-hint">
-            <legend>Board</legend>
-            <label class="variant-option">
-              <input type="radio" name="variant" value="microbit" checked />
-              <span>
+          <div class="field">
+            <span class="field-label" data-i18n="board">Board</span>
+            <div class="board" role="radiogroup" aria-label="Board">
+              <label class="seg">
+                <input type="radio" name="variant" value="microbit" checked />
                 <strong>Classic micro:bit</strong>
-                <small>Built-in sensors and LED matrix.</small>
-              </span>
-            </label>
-            <label class="variant-option">
-              <input type="radio" name="variant" value="mbkit" />
-              <span>
+                <small data-i18n="microbitDesc">Built-in sensors and LED matrix.</small>
+              </label>
+              <label class="seg">
+                <input type="radio" name="variant" value="mbkit" />
                 <strong>mb-kit (IIC modules)</strong>
-                <small>External IIC modules with configurable sensors.</small>
-              </span>
-            </label>
-          </fieldset>
-
-          <label for="bluetooth-name">Bluetooth name</label>
-          <input
-            id="bluetooth-name"
-            name="bluetoothName"
-            type="text"
-            maxlength="16"
-            autocomplete="off"
-            spellcheck="false"
-            placeholder="robot"
-            aria-describedby="name-hint"
-            required
-          />
-          <div id="name-hint" class="hint">
-            Use up to 16 ASCII characters. Patching runs locally in your browser;
-            no data is uploaded.
+                <small data-i18n="mbkitDesc">External IIC modules, configurable sensors.</small>
+              </label>
+            </div>
           </div>
 
-          <div id="mbkit-panel" class="mbkit-panel" hidden>
-            <h2 class="panel-title">mb-kit sensor settings</h2>
-            <p class="hint">
-              These values are written into the firmware. Leave the defaults if
-              you are unsure.
+          <div class="field namewrap">
+            <label class="field-label" for="bluetooth-name" data-i18n="btName">Bluetooth name</label>
+            <div class="prefixed">
+              <span class="pfx" title="Required prefix, hidden from the user">sjr-</span>
+              <input
+                id="bluetooth-name"
+                name="bluetoothName"
+                type="text"
+                maxlength="16"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="robot"
+                aria-describedby="name-hint"
+                required
+              />
+            </div>
+            <p id="name-hint" class="hint" data-i18n="btHint">
+              Up to 16 ASCII characters. The <code>sjr-</code> prefix stays embedded
+              in the advertised name but is hidden on the device.
             </p>
+          </div>
 
-            <div class="params-grid">
-              <label class="param">
-                <span>Near threshold (mm)</span>
-                <input type="number" id="near_threshold_mm" min="0" max="65535" step="1" value="200" />
-              </label>
-
-              <label class="param">
-                <span>Light threshold (0–65535)</span>
-                <input type="number" id="light_threshold" min="0" max="65535" step="1" value="500" />
-              </label>
-
-              <label class="param">
-                <span>Wet threshold (0–255)</span>
-                <input type="number" id="wet_threshold" min="0" max="255" step="1" value="128" />
-              </label>
-
-              <label class="param">
-                <span>Motor speed (PWM 0–255)</span>
-                <input type="number" id="motor_default_speed" min="1" max="255" step="1" value="100" />
-              </label>
-
-              <label class="param">
-                <span>Time unit (ms)</span>
-                <input type="number" id="wait_unit_ms" min="1" max="65535" step="1" value="500" />
-              </label>
-
-              <label class="param">
-                <span>Ring brightness (0–255)</span>
-                <input type="number" id="ring_brightness" min="0" max="255" step="1" value="128" />
-              </label>
-
-              <label class="param">
-                <span>Animation step (ms)</span>
-                <input type="number" id="rainbow_step_ms" min="1" max="65535" step="1" value="400" />
-              </label>
+          <div id="mbkit-panel" class="panel" hidden>
+            <div class="presets" role="group" aria-label="Quick presets">
+              <span class="plabel" data-i18n="presets">Quick presets</span>
+              <button class="chip" type="button" data-preset="classroom" data-i18n="presetClassroom">Classroom</button>
+              <button class="chip" type="button" data-preset="home" data-i18n="presetHome">Home</button>
+              <button class="chip reset" type="button" data-preset="default" data-i18n="presetReset">↺ Reset to defaults</button>
             </div>
 
-            <div class="toggles">
-              <label class="toggle">
-                <input type="checkbox" id="soil_high_is_wet" checked />
-                <span>Higher soil reading = wetter</span>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="motor_swap" />
-                <span>Swap motors (left/right)</span>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="motor0_invert" />
-                <span>Invert motor 0</span>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="motor1_invert" />
-                <span>Invert motor 1</span>
-              </label>
+            <section class="group">
+              <div class="ghead"><h2 data-i18n="grpSensors">Sensors</h2><span class="eyebrow-mono" data-i18n="grpSensorsSub">wait thresholds · I2C 0x10–0x23</span></div>
+              <div class="rows">
+                <div class="param">
+                  <div class="param-top">
+                    <label for="near_threshold_mm" data-i18n="pNear">“Near” distance</label>
+                    <span class="valbox"><input id="near_threshold_mm" type="number" min="20" max="2000" step="10" value="200" /><span class="unit">mm</span></span>
+                  </div>
+                  <input type="range" data-for="near_threshold_mm" min="20" max="800" step="10" value="200" aria-label="Near distance" />
+                  <div class="derived" data-derive-for="near_threshold_mm"></div>
+                </div>
+
+                <div class="param">
+                  <div class="param-top">
+                    <label for="wet_threshold" data-i18n="pWet">Moisture threshold</label>
+                    <span class="valbox"><input id="wet_threshold" type="number" min="0" max="255" step="1" value="128" /><span class="unit">/255</span></span>
+                  </div>
+                  <input type="range" data-for="wet_threshold" min="0" max="255" step="1" value="128" aria-label="Moisture threshold" />
+                  <div class="derived" data-derive-for="wet_threshold"></div>
+                </div>
+
+                <div class="toggle-row">
+                  <span class="tx"><label for="soil_high_is_wet" data-i18n="pSoil">Higher reading = wetter</label><small data-i18n="pSoilSub">Flip this if the sensor reads inverted.</small></span>
+                  <span class="switch"><input type="checkbox" id="soil_high_is_wet" checked /><span class="slot"></span><span class="knob"></span></span>
+                </div>
+
+                <div class="numonly">
+                  <div class="param-top">
+                    <label for="light_threshold" data-i18n="pLight">Light threshold</label>
+                    <span class="valbox"><input id="light_threshold" class="wide" type="number" min="0" max="65535" step="1" value="500" /><span class="unit">raw</span></span>
+                  </div>
+                  <div class="derived" data-derive-for="light_threshold"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="group">
+              <div class="ghead"><h2 data-i18n="grpMotors">Motors</h2><span class="eyebrow-mono" data-i18n="grpMotorsSub">movement &amp; speed · I2C 0x25</span></div>
+              <div class="rows">
+                <div class="param">
+                  <div class="param-top">
+                    <label for="motor_speed_pct" data-i18n="pMotor">Motor speed</label>
+                    <span class="valbox"><input id="motor_speed_pct" type="number" min="0" max="100" step="1" value="40" /><span class="unit">%</span></span>
+                  </div>
+                  <input type="range" data-for="motor_speed_pct" min="0" max="100" step="1" value="40" aria-label="Motor speed" />
+                  <div class="derived" data-derive-for="motor_speed_pct"></div>
+                </div>
+
+                <div class="param">
+                  <div class="param-top">
+                    <label for="wait_unit_ms" data-i18n="pWaitUnit">Time unit <span class="sub">· movement/display</span></label>
+                    <span class="valbox"><input id="wait_unit_ms" class="wide" type="number" min="100" max="5000" step="50" value="500" /><span class="unit">ms</span></span>
+                  </div>
+                  <input type="range" data-for="wait_unit_ms" min="100" max="2000" step="50" value="500" aria-label="Movement time unit" />
+                  <div class="derived" data-derive-for="wait_unit_ms"></div>
+                </div>
+
+                <details class="advanced">
+                  <summary><span class="caret">▸</span> <span data-i18n="advCal">Advanced motor calibration</span></summary>
+                  <div class="adv-body">
+                    <div class="toggle-row">
+                      <span class="tx"><label for="motor_swap" data-i18n="pSwap">Swap motors (left/right)</label><small data-i18n="pSwapSub">If turns come out mirrored.</small></span>
+                      <span class="switch"><input type="checkbox" id="motor_swap" /><span class="slot"></span><span class="knob"></span></span>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="tx"><label for="motor0_invert" data-i18n="pInv0">Invert motor 0</label></span>
+                      <span class="switch"><input type="checkbox" id="motor0_invert" /><span class="slot"></span><span class="knob"></span></span>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="tx"><label for="motor1_invert" data-i18n="pInv1">Invert motor 1</label></span>
+                      <span class="switch"><input type="checkbox" id="motor1_invert" /><span class="slot"></span><span class="knob"></span></span>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <section class="group">
+              <div class="ghead"><h2 data-i18n="grpRings">LED rings</h2><span class="eyebrow-mono" data-i18n="grpRingsSub">brightness &amp; rainbow · I2C 0x24/0x26</span></div>
+              <div class="rows">
+                <div class="param">
+                  <div class="param-top">
+                    <label for="ring_brightness" data-i18n="pBright">Ring brightness</label>
+                    <span class="valbox"><input id="ring_brightness" type="number" min="0" max="255" step="1" value="128" /><span class="unit">/255</span></span>
+                  </div>
+                  <input type="range" data-for="ring_brightness" min="0" max="255" step="1" value="128" aria-label="Ring brightness" />
+                  <div class="derived" data-derive-for="ring_brightness"></div>
+                </div>
+
+                <div class="param">
+                  <div class="param-top">
+                    <label for="rainbow_step_ms" data-i18n="pRainbow">Rainbow speed</label>
+                    <span class="valbox"><input id="rainbow_step_ms" class="wide" type="number" min="50" max="2000" step="10" value="400" /><span class="unit">ms</span></span>
+                  </div>
+                  <input type="range" data-for="rainbow_step_ms" min="50" max="1000" step="10" value="400" aria-label="Rainbow speed" />
+                  <div class="derived" data-derive-for="rainbow_step_ms"></div>
+                </div>
+              </div>
+            </section>
+
+            <div class="blockview">
+              <div class="bhead">
+                <b data-i18n="blockTitle">Configuration block written to the device</b>
+                <span class="tag" id="block-tag">SJRMBK01 · 32 B</span>
+              </div>
+              <div class="hexgrid" id="block-hex" aria-live="off"></div>
             </div>
           </div>
 
-          <button id="download-button" type="submit">Download .hex</button>
+          <div class="actions">
+            <button class="download" id="download-button" type="submit">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
+              <span data-i18n="download">Download .hex</span>
+            </button>
+            <span id="status" class="status" role="status" aria-live="polite" data-i18n="statusReady">Ready to generate firmware.</span>
+          </div>
         </form>
-
-        <div id="status" class="status" role="status" aria-live="polite">
-          Ready to generate firmware.
-        </div>
       </section>
 
       <section class="notes">
-        <h2>How to use</h2>
+        <h2 data-i18n="howTitle">How to use</h2>
         <ol>
-          <li>Choose your board and enter the Bluetooth name you want to see when scanning.</li>
-          <li>Download the <code>.hex</code> file.</li>
-          <li>Connect the board via USB and copy the downloaded file onto it.</li>
+          <li data-i18n="how1">Choose your board and enter the Bluetooth name you want to see when scanning.</li>
+          <li data-i18n="how2">Tune the mb-kit settings if you are using that board (optional).</li>
+          <li data-i18n="how3">Download the <code>.hex</code> file, connect the board via USB and copy the file onto it.</li>
         </ol>
       </section>
     </main>
