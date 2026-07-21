@@ -7,12 +7,14 @@
     <link rel="stylesheet" href="./style.css" />
     <link rel="icon" type="image/png" href="./favicon.png" />
     <script>
-      try {
-        var t = localStorage.getItem("sjr-theme");
-        if (t) document.documentElement.setAttribute("data-theme", t);
-        var l = localStorage.getItem("sjr-lang");
-        if (l) document.documentElement.setAttribute("lang", l);
-      } catch (e) {}
+      (function () {
+        try {
+          var theme = localStorage.getItem("sjr-theme");
+          if (theme) document.documentElement.setAttribute("data-theme", theme);
+          var savedLang = localStorage.getItem("sjr-lang");
+          if (savedLang) document.documentElement.setAttribute("lang", savedLang);
+        } catch (e) {}
+      })();
     </script>
   </head>
   <body>
