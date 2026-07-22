@@ -110,7 +110,7 @@ const STRINGS = {
 
 let lang = (() => {
   try { const s = localStorage.getItem("sjr-lang"); if (s === "en" || s === "es") return s; } catch (e) {}
-  return (navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
+  return "en"; /* default English; a saved choice (incl. ES) still wins */
 })();
 const t = (key) => STRINGS[lang][key];
 
