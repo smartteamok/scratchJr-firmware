@@ -18,7 +18,7 @@ const VARIANTS = {
 /* mb-kit config block: keep in sync with mbkit_config_block.h / MBKIT-GUIDE §6.1 */
 const MBKIT_MAGIC = "SJRMBK01";
 const MBKIT_BLOCK_SIZE = 32;
-const MBKIT_LAYOUT_VERSION = 1;
+const MBKIT_LAYOUT_VERSION = 2;
 
 const form = document.getElementById("firmware-form");
 const nameInput = document.getElementById("bluetooth-name");
@@ -45,7 +45,7 @@ const STRINGS = {
     grpSensors: "Sensors", grpSensorsSub: "wait thresholds · I2C 0x10–0x23",
     pNear: "“Near” distance", pWet: "Moisture threshold",
     pSoil: "Higher reading = wetter", pSoilSub: "Flip this if the sensor reads inverted.",
-    pLight: "Light threshold",
+    pLight: "Light threshold", pSound: "Sound threshold",
     grpMotors: "Motors", grpMotorsSub: "movement &amp; speed · I2C 0x25",
     pMotor: "Motor speed",
     pWaitUnit: 'Time unit <span class="sub">· movement/display</span>',
@@ -83,7 +83,7 @@ const STRINGS = {
     grpSensors: "Sensores", grpSensorsSub: "umbrales de espera · I2C 0x10–0x23",
     pNear: "Distancia «cerca»", pWet: "Umbral de humedad",
     pSoil: "Lectura alta = más húmedo", pSoilSub: "Invertí esto si el sensor mide al revés.",
-    pLight: "Umbral de luz",
+    pLight: "Umbral de luz", pSound: "Umbral de sonido",
     grpMotors: "Motores", grpMotorsSub: "movimiento y velocidad · I2C 0x25",
     pMotor: "Velocidad del motor",
     pWaitUnit: 'Unidad de tiempo <span class="sub">· movimiento/display</span>',
@@ -382,6 +382,7 @@ function readMbkitConfig() {
     near_threshold_mm: readNumberField("near_threshold_mm", "Near threshold", 0, 65535),
     light_threshold: readNumberField("light_threshold", "Light threshold", 0, 65535),
     wet_threshold: readNumberField("wet_threshold", "Wet threshold", 0, 255),
+    sound_threshold: readNumberField("sound_threshold", "Sound threshold", 0, 4095),
     ring_brightness: readNumberField("ring_brightness", "Ring brightness", 0, 255),
     rainbow_step_ms: readNumberField("rainbow_step_ms", "Rainbow speed", 1, 65535),
     soil_high_is_wet: document.getElementById("soil_high_is_wet").checked ? 1 : 0,
@@ -411,7 +412,8 @@ function buildMbkitConfigBlock(cfg) {
   bytes[21] = cfg.motor1_invert;
   bytes[22] = cfg.motor_default_speed & 0xff;
   writeU16le(bytes, 23, cfg.wait_unit_ms);
-  /* bytes[25..27] reserved, already zero */
+  writeU16le(bytes, 25, cfg.sound_threshold); /* layout v2 */
+  /* byte[27] reserved, already zero */
   writeU32le(bytes, 28, crc32Ieee(bytes.slice(0, 28)));
   return bytes;
 }
@@ -462,7 +464,7 @@ function verifyPatchedHex(hexText, variant, bluetoothName) {
 
 /* ── UI: sliders, derived values, presets, live block ─────── */
 
-const SLIDER_IDS = ["near_threshold_mm", "wet_threshold", "motor_speed_pct", "wait_unit_ms", "ring_brightness", "rainbow_step_ms"];
+const SLIDER_IDS = ["near_threshold_mm", "wet_threshold", "sound_threshold", "motor_speed_pct", "wait_unit_ms", "ring_brightness", "rainbow_step_ms"];
 const NUMERIC_IDS = SLIDER_IDS.concat("light_threshold");
 const numVal = (id) => Number.parseInt(document.getElementById(id).value, 10) || 0;
 
@@ -487,6 +489,10 @@ function derivedHTML(id) {
       return es
         ? `<span class="note">cuenta cruda 0–65535 · sin referencia de vendor,</span> <span class="em">calibrá con el sensor real</span>`
         : `<span class="note">raw count 0–65535 · no vendor reference,</span> <span class="em">calibrate with the real sensor</span>`;
+    case "sound_threshold":
+      return es
+        ? `<span class="note">dispara con nivel</span> <span class="em">≥ ${v}</span> <span class="note">(pico-a-pico del mic, 12-bit 0–4095)</span>`
+        : `<span class="note">triggers at level</span> <span class="em">≥ ${v}</span> <span class="note">(mic peak-to-peak, 12-bit 0–4095)</span>`;
     case "motor_speed_pct": {
       const pwm = Math.max(1, Math.round((v / 100) * 255));
       return es
@@ -537,9 +543,9 @@ document.querySelectorAll(".switch input").forEach((tgl) => tgl.addEventListener
 
 /* Presets — illustrative bundles */
 const PRESETS = {
-  default:   { near_threshold_mm:200, wet_threshold:128, soil_high_is_wet:1, light_threshold:500, motor_speed_pct:40, wait_unit_ms:500, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:128, rainbow_step_ms:400 },
-  classroom: { near_threshold_mm:250, wet_threshold:120, soil_high_is_wet:1, light_threshold:800, motor_speed_pct:55, wait_unit_ms:450, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:205, rainbow_step_ms:300 },
-  home:      { near_threshold_mm:180, wet_threshold:135, soil_high_is_wet:1, light_threshold:350, motor_speed_pct:45, wait_unit_ms:600, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:95,  rainbow_step_ms:550 },
+  default:   { near_threshold_mm:200, wet_threshold:128, soil_high_is_wet:1, light_threshold:500, sound_threshold:300, motor_speed_pct:40, wait_unit_ms:500, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:128, rainbow_step_ms:400 },
+  classroom: { near_threshold_mm:250, wet_threshold:120, soil_high_is_wet:1, light_threshold:800, sound_threshold:500, motor_speed_pct:55, wait_unit_ms:450, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:205, rainbow_step_ms:300 },
+  home:      { near_threshold_mm:180, wet_threshold:135, soil_high_is_wet:1, light_threshold:350, sound_threshold:250, motor_speed_pct:45, wait_unit_ms:600, motor_swap:0, motor0_invert:0, motor1_invert:0, ring_brightness:95,  rainbow_step_ms:550 },
 };
 function applyPreset(name) {
   const p = PRESETS[name];
